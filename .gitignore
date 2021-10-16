@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+client_secret.json
+sightx-project-key.json
+SC*.json
+.idea/
+.DS_Store
