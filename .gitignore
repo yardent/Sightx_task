@@ -134,3 +134,4 @@ sightx-project-key.json
 SC*.json
 .idea/
 .DS_Store
+*.txt

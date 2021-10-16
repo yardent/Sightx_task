@@ -15,5 +15,4 @@ class BQ_Client:
 
     def load_df(self, df, table):
         df.to_gbq(table, project_id=self.project, if_exists='append',
-
                   progress_bar=True, credentials=self.credentials)

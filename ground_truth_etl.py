@@ -3,6 +3,7 @@ import os
 from google_drive_client import Google_Drive_Client
 from bq_client import BQ_Client
 import pandas as pd
+from termcolor import cprint
 
 
 
@@ -80,16 +81,15 @@ def create_df():
 
 
 def get_movies_info(file_content):
-
+    cprint('Load Movie Data -', 'blue', attrs=['bold', 'underline'], end='\n')
     movies, movies_objects, frame, frame_objects = create_df()
 
     counter = 0
     for file in file_content:
-        print("load the movie's meta data")
+        counter = counter + 1
         movie_meta = file_content[file][0]
 
         movies = movies.append(movie_meta, ignore_index=True)
-        print("load the movie's objects")
         for obj in movie_meta['objects']:
             obj_extend = {}
             obj_extend['version'] = movie_meta['version']
@@ -99,11 +99,10 @@ def get_movies_info(file_content):
                 obj_extend['attribute_type'] = obj['attributes']['type']
             movies_objects = movies_objects.append(obj_extend, ignore_index=True)
 
-            counter = counter+1
+
         #remove meta data
         file_content[file].pop(0)
 
-        print("load the frame's meta data")
         fram_num = 0
         for frame_content in file_content[file]:
             frame_extend = {}
@@ -125,7 +124,7 @@ def get_movies_info(file_content):
                     frame_object_extend['ignore_frame'] = frame_content['attributes']['ignore_frame']
                 frame_objects = frame_objects.append(frame_object_extend, ignore_index=True)
 
-    print(counter)
+    cprint('Load {} Movies'.format(counter), 'blue', attrs=['bold', 'underline'], end='\n')
     return movies, movies_objects, frame, frame_objects
 
 
@@ -135,25 +134,32 @@ def main(argv=None):
     config = read_json(root_dir + "/configurations.json")
     service_account_location = config['service_account']
     drive_client = Google_Drive_Client(service_account_location)
-    all_folders = drive_client.get_all_folders({}, '1alWTLdYGr32GrwFCCN7NXn1z7MDT6M_6')
+    cprint('Run Ground Truth ', 'green', attrs=['bold', 'underline'], end='\n')
+    print('Folder ID - ', config['ground_truth_folder_id'])
+    all_folders = drive_client.get_all_folders({}, config['ground_truth_folder_id'])
     bq_client= BQ_Client(service_account_location,'sightx-project')
     for key in all_folders:
-        print('Load folder - {}'.format(key))
+        cprint('Load folder - ', 'blue', attrs=['bold', 'underline'], end='\n')
+        print('Folder Name - ', key)
         all_file = drive_client.get_all_files(all_folders[key], file_type)
         file_content = get_all_file_content(all_file)
         movies, movies_objects, frame, frame_objects = get_movies_info(file_content)
+        cprint('Load To Movies to BQ', 'yellow', attrs=['bold', 'underline'], end='\n')
         bq_client.load_df(movies, 'Raw_Data.Movie')
+        cprint('Load To Movies Objects to BQ', 'yellow', attrs=['bold', 'underline'], end='\n')
         bq_client.load_df(movies_objects, 'Raw_Data.Movie_Objects')
+        cprint('Load To Frames to BQ', 'yellow', attrs=['bold', 'underline'], end='\n')
         bq_client.load_df(frame, 'Raw_Data.Frame')
+        cprint('Load To Frames Objects to BQ', 'yellow', attrs=['bold', 'underline'], end='\n')
         bq_client.load_df(frame_objects,  'Raw_Data.Frame_Objects')
-    # email = Email_Service()
-    # email.send_mail()
+
 
 if __name__ == "__main__":
     main()
 
 
 #TODO -
+# error handling !!!
 # data validation,
 # file validation,
 # location validation,

@@ -40,6 +40,24 @@ class Google_Drive_Client:
                 all_folder_dict.update(self.get_all_folders(all_folder_dict, folder_dict[name]))
         return all_folder_dict
 
+
+    def get_file(self, file_id, file_name):
+        request = self.service.files().get_media(fileId=file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fd=fh, request=request)
+
+        done = False
+
+        while not done:
+            status, done = downloader.next_chunk()
+
+        fh.seek(0)
+
+        with open(file_name, 'wb') as f:
+            f.write(fh.read())
+            f.close()
+        return file_name
+
     def get_all_files(self, folder_id, file_type):
         df = self.get_data_from_drive(folder_id)
         all_file = []
@@ -49,20 +67,7 @@ class Google_Drive_Client:
                 file_name = row['name']
                 file_id = row['id']
                 all_file.append(file_name)
-                request = self.service.files().get_media(fileId=file_id)
-                fh = io.BytesIO()
-                downloader = MediaIoBaseDownload(fd=fh, request=request)
-
-                done = False
-
-                while not done:
-                    status, done = downloader.next_chunk()
-
-                fh.seek(0)
-
-                with open(file_name, 'wb') as f:
-                    f.write(fh.read())
-                    f.close()
+                self.get_file(file_id, file_name)
         return all_file
 
     def get_folders(self, folder_id):

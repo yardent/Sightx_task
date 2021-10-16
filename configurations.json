@@ -1,4 +1,5 @@
 {
   "service_account": "sightx-project-key.json",
-  "data_location": "Data/"
+  "data_location": "Data/",
+  "ground_truth_folder_id": "1alWTLdYGr32GrwFCCN7NXn1z7MDT6M_6"
 }
