@@ -22,13 +22,13 @@ class Google_Drive_Client:
     SCOPE = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly']
 
 
-    def __init__(self, service_key_location):
+    def __init__(self, service_key_location, data_local_location):
         self.service_key_location=service_key_location
         self.credentials = ServiceAccountCredentials.from_json_keyfile_name(
             service_key_location, scopes=self.SCOPE)
 
         self.service = build(self.API_NAME, self.API_VERSION, credentials=self.credentials)
-
+        self.data_local_location = data_local_location
 
     def get_all_folders(self, all_folder_dict, folder_id):
 
@@ -53,7 +53,7 @@ class Google_Drive_Client:
 
         fh.seek(0)
 
-        with open(file_name, 'wb') as f:
+        with open(self.data_local_location+file_name, 'wb') as f:
             f.write(fh.read())
             f.close()
         return file_name

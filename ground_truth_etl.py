@@ -19,10 +19,10 @@ def read_json(file):
 
 
 
-def get_all_file_content(all_file):
+def get_all_file_content(all_file, file_location):
     file_content = {}
     for file in all_file:
-        data = read_json(file)
+        data = read_json(file_location+file)
         file_content[file] = data
 
     return file_content
@@ -86,10 +86,10 @@ def get_movies_info(file_content):
 
     counter = 0
     for file in file_content:
-        counter = counter + 1
         movie_meta = file_content[file][0]
 
         movies = movies.append(movie_meta, ignore_index=True)
+
         for obj in movie_meta['objects']:
             obj_extend = {}
             obj_extend['version'] = movie_meta['version']
@@ -104,6 +104,10 @@ def get_movies_info(file_content):
         file_content[file].pop(0)
 
         fram_num = 0
+        if "frame_skip" in movie_meta:
+            counter = counter + movie_meta["frame_skip"]
+        else:
+            counter = counter + 1
         for frame_content in file_content[file]:
             frame_extend = {}
             frame_extend['version'] = movie_meta['version']
@@ -133,7 +137,8 @@ def main(argv=None):
     file_type = "application/json"
     config = read_json(root_dir + "/configurations.json")
     service_account_location = config['service_account']
-    drive_client = Google_Drive_Client(service_account_location)
+    file_location = 'data/'
+    drive_client = Google_Drive_Client(service_account_location, file_location)
     cprint('Run Ground Truth ', 'green', attrs=['bold', 'underline'], end='\n')
     print('Folder ID - ', config['ground_truth_folder_id'])
     all_folders = drive_client.get_all_folders({}, config['ground_truth_folder_id'])
@@ -142,7 +147,7 @@ def main(argv=None):
         cprint('Load folder - ', 'blue', attrs=['bold', 'underline'], end='\n')
         print('Folder Name - ', key)
         all_file = drive_client.get_all_files(all_folders[key], file_type)
-        file_content = get_all_file_content(all_file)
+        file_content = get_all_file_content(all_file, file_location)
         movies, movies_objects, frame, frame_objects = get_movies_info(file_content)
         cprint('Load To Movies to BQ', 'yellow', attrs=['bold', 'underline'], end='\n')
         bq_client.load_df(movies, 'Raw_Data.Movie')
